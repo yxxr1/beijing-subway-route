@@ -14,11 +14,13 @@ const inputTo = (graphData, from) => (
       return inputTo(from);
     }
 
-    const route = findRoute(graphData, from, to);
+    const { route, lines, timeMin, distanceKm } = findRoute(graphData, from, to);
 
-    const result = route.map((node) => `${node.name}(${node.latName})`).join('\n-> ');
+    const routeText = route.map((node) => `${node.name}(${node.latName})`).join('\n -> ');
+    const infoText = `Количество пересадок: ${lines.length - 1}\n Линии: ${lines.join(' -> ')}\n Примерное время в пути: ${timeMin}m\n Примерное расстояние: ${distanceKm}km`;
 
-    console.log('Оптимальный маршрут:\n->', result);
+    console.log('Оптимальный маршрут:\n ->', routeText);
+    console.log('Информация о маршруте:\n', infoText);
     process.exit();
   })
 );
