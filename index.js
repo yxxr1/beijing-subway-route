@@ -7,6 +7,36 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+const showRoute = (routesData, index) => {
+  const { route, lines, timeMin, distanceKm } = routesData[index];
+  const routeText = route.map((node) => `${node.name}(${node.latName})`).join('\n -> ');
+  const infoText = `Количество пересадок: ${lines.length - 1}\n Линии: ${lines.join(' -> ')}\n Примерное время в пути: ${timeMin}m\n Примерное расстояние: ${distanceKm}km`;
+
+  console.log(`Показан ${index + 1} маршрут из ${routesData.length}`);
+  console.log('Маршрут:\n ->', routeText);
+  console.log('Информация о маршруте:\n', infoText);
+}
+
+const inputRouteNumber = (routesData) => {
+  console.log(`\nНайдено маршрутов: ${routesData.length}`);
+
+  rl.question(`<route number> or 'exit' -> `, (input) => {
+    if (input === 'exit') {
+      return process.exit();
+    }
+
+    const number = parseInt(input);
+
+    if (isNaN(number) || number < 1 || number > routesData.length) {
+      console.log('Incorrect route number');
+      return inputRouteNumber(routesData);
+    }
+
+    showRoute(routesData, number - 1);
+    inputRouteNumber(routesData);
+  });
+}
+
 const inputTo = (graphData, from) => (
   rl.question('To station -> ', (to) => {
     if (!graphData[to] || from === to) {
@@ -14,14 +44,10 @@ const inputTo = (graphData, from) => (
       return inputTo(from);
     }
 
-    const { route, lines, timeMin, distanceKm } = findRoute(graphData, from, to);
+    const routesData = findRoute(graphData, from, to);
 
-    const routeText = route.map((node) => `${node.name}(${node.latName})`).join('\n -> ');
-    const infoText = `Количество пересадок: ${lines.length - 1}\n Линии: ${lines.join(' -> ')}\n Примерное время в пути: ${timeMin}m\n Примерное расстояние: ${distanceKm}km`;
-
-    console.log('Оптимальный маршрут:\n ->', routeText);
-    console.log('Информация о маршруте:\n', infoText);
-    process.exit();
+    showRoute(routesData, 0);
+    inputRouteNumber(routesData);
   })
 );
 const inputFrom = (graphData) => (
