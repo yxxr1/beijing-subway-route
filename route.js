@@ -3,6 +3,8 @@ const AverageSubwaySpeedKmh = 80;
 const ChangeLineTimeMin = 5;
 const StationStopTimeMin = 2;
 
+const RoutesSortField = 'distanceKm';
+
 const calcAverageTime = (distanceKm, changeLineCount, stopCount) => {
   const timeBetweenStationsMin = (distanceKm / AverageSubwaySpeedKmh) * 60;
   const changeLineTime = changeLineCount * ChangeLineTimeMin;
@@ -77,6 +79,7 @@ const findRoute = (data, from, to) => {
   const startNode = data[from];
   // { [имя станции]: [расстояние из исходной, маршрут из исходной] }
   const routes = {[startNode.name]: [0, [startNode]]};
+  const destinationRouteRecords = [];
   const queue = new Queue();
   queue.add(startNode);
 
@@ -87,25 +90,33 @@ const findRoute = (data, from, to) => {
     node.neighbors.forEach(([distanceToNeighbor, neighbor]) => {
       const neighborDistance = routes[neighbor.name]?.[0] ?? Infinity;
       const newDistance = distance + distanceToNeighbor;
+      const routeRecord = [newDistance, [...route, neighbor]];
+
+      if (neighbor.name === to && !route.find(({ name }) => name === to)) {
+        destinationRouteRecords.push(routeRecord);
+      }
 
       if (newDistance < neighborDistance) {
-        routes[neighbor.name] = [newDistance, [...route, neighbor]];
+        routes[neighbor.name] = routeRecord;
+
         queue.add(neighbor);
       }
     });
   }
 
-  const [distance, route] = routes[to];
-  const lines = getLinesInfo(route);
-  const distanceKm =  distance / OneKmInCoords;
-  const timeMin = calcAverageTime(distanceKm, lines.length - 1, route.length - 1);
+  return destinationRouteRecords.map((routeRecord) => {
+    const [distance, route] = routeRecord;
+    const lines = getLinesInfo(route);
+    const distanceKm =  distance / OneKmInCoords;
+    const timeMin = calcAverageTime(distanceKm, lines.length - 1, route.length - 1);
 
-  return {
-    route,
-    lines,
-    distanceKm: distanceKm.toFixed(1),
-    timeMin: Math.ceil(timeMin),
-  };
+    return {
+      route,
+      lines,
+      distanceKm: distanceKm.toFixed(1),
+      timeMin: Math.ceil(timeMin),
+    };
+  }).sort(({ [RoutesSortField]: f1 }, { [RoutesSortField]: f2 }) => f1 - f2);
 }
 
 module.exports = findRoute;
